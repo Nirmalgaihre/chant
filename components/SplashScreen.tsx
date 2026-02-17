@@ -26,7 +26,7 @@ const SplashScreen: React.FC = () => {
         <h1 className="text-4xl font-black text-slate-800 tracking-tighter">Naam Jap Counter</h1>
         <div className="flex items-center justify-center space-x-3">
           <div className="h-px w-8 bg-orange-300"></div>
-          <p className="text-orange-500 font-bold text-sm uppercase tracking-[0.4em]">Radha Radha</p>
+          <p className="text-orange-500 font-bold text-sm uppercase tracking-[0.4em]">Radhe Radhe</p>
           <div className="h-px w-8 bg-orange-300"></div>
         </div>
       </div>

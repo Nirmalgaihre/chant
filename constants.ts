@@ -19,4 +19,4 @@ export const STORAGE_KEY = 'naam_jap_app_data_v1';
  * This image should ideally be the Maharaj laughing art provided.
  * Since we are in a web environment, we use a beautiful high-res representative link.
  */
-export const MAHARAJ_IMAGE_URL = "https://images.unsplash.com/photo-1590050752117-23a9d7f281bd?q=80&w=1000&auto=format&fit=crop&bg=white";
+export const MAHARAJ_IMAGE_URL = "https://nirmalgaihre.com.np/images/name-jap-counter-logo.png";

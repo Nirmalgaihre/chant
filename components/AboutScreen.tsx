@@ -66,7 +66,7 @@ const AboutScreen: React.FC<AboutScreenProps> = ({ likes, dislikes, onVote, hasV
         <div className="flex items-center space-x-4">
           <div className="w-16 h-16 rounded-full border-2 border-orange-500 p-0.5 overflow-hidden shadow-md">
             <img 
-              src="https://api.dicebear.com/7.x/avataaars/svg?seed=NirmalGaihre&radius=50&backgroundColor=f8f9fa" 
+              src="https://nirmalgaihre.com.np/images/nirmalgaihre.jpg" 
               alt="Nirmal Gaihre" 
               className="rounded-full w-full h-full bg-slate-100" 
             />
@@ -150,7 +150,7 @@ const AboutScreen: React.FC<AboutScreenProps> = ({ likes, dislikes, onVote, hasV
           <p className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? 'text-slate-500' : 'text-[#000]'}`}>
             Devotion First
           </p>
-          <p className="text-orange-500 text-[9px] font-bold">App Version 1.2.0 • Radha Radha</p>
+          <p className="text-orange-500 text-[9px] font-bold">App Version 1.0.0 • Radhe Radhe</p>
         </div>
       </footer>
     </div>
