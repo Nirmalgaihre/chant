@@ -1,0 +1,8 @@
+
+{
+  "name": "Naam Jap Counter",
+  "description": "A modern, spiritual mantra chanting counter with real-time analytics, customizable mantras, and a clean minimal interface.",
+  "requestFramePermissions": [
+    "vibration"
+  ]
+}
