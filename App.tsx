@@ -8,6 +8,20 @@ import StatsScreen from './components/StatsScreen';
 import SettingsScreen from './components/SettingsScreen';
 import AboutScreen from './components/AboutScreen';
 import SplashScreen from './components/SplashScreen';
+import Onesignal from 'react-onesignal';
+
+const = App () => {
+  useEffect (() => {
+    Onesignal.init{{
+      appId: "16948a73-f313-4e1e-8796-32a94707cea8",
+      notifyButton: {
+        enable: true
+      }
+    }}; 
+  }, []);
+  return <div> Your react app with onesignal</div>
+}
+
 
 const App: React.FC = () => {
   const [showSplash, setShowSplash] = useState(true);

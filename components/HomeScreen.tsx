@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 
 interface FloatingMantra {
@@ -131,7 +130,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ count, target, totalMalas, toda
 
           <div className="mt-4 flex items-center space-x-2">
             <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-colors ${darkMode ? 'bg-orange-500/10 text-orange-500' : 'bg-orange-50 text-orange-500 font-black'}`}>
-              Lifetime Malas: {totalMalas}
+              Lifetime Total: {totalMalas + todayTotal}
             </div>
           </div>
         </div>
