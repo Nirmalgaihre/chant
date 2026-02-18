@@ -11,13 +11,11 @@ import {
 } from 'lucide-react';
 
 interface AboutViewProps {
-  // We keep the prop for compatibility, but ignore it and force dark mode
-  darkMode?: boolean;
+  darkMode?: boolean; // kept for compatibility, but ignored
 }
 
 const AboutView: React.FC<AboutViewProps> = () => {
-  // Force dark mode as default for this screen
-  const darkMode = true;
+  const darkMode = true; // forced dark mode
 
   const [currentScreen, setCurrentScreen] = useState<
     'main' | 'privacy' | 'aboutApp' | 'reportProblem' | 'shareApp' | 'chant'
@@ -53,12 +51,16 @@ const AboutView: React.FC<AboutViewProps> = () => {
       </p>
 
       <a
-        href="/naam-jap.apk"
-        download
-        className="mt-5 inline-flex items-center gap-2 px-7 py-3.5 rounded-full font-medium shadow-md transition-all duration-200 bg-orange-600 hover:bg-orange-700 text-white"
+        href="https://www.nirmalgaihre.com.np/images/naam-jap.apk"
+        download="naam-jap.apk"
+        className="mt-6 inline-flex items-center gap-2 px-8 py-4 rounded-full font-medium shadow-lg transition-all duration-200 bg-orange-600 hover:bg-orange-700 active:bg-orange-800 text-white text-base"
       >
         Download App (APK)
       </a>
+
+      <p className="mt-3 text-xs text-zinc-500">
+        Android APK • Tap to download • Enable "Install unknown apps" in settings to install
+      </p>
     </div>
   );
 
@@ -219,7 +221,7 @@ const AboutView: React.FC<AboutViewProps> = () => {
   };
 
   const ShareAppScreen = () => {
-    const shareText = `Naam Jap – Simple companion for Radha-Krishna Naam Jap\nhttps://nirmalgaihre.com.np`;
+    const shareText = `Naam Jap – Simple companion for Radha-Krishna Naam Jap\nhttps://www.nirmalgaihre.com.np`;
 
     const handleShare = () => {
       if (navigator.share) {

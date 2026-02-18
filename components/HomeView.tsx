@@ -24,25 +24,23 @@ const STORAGE_KEY_CURRENT = 'mantraSession';
 const STORAGE_KEY_HISTORY = 'mantraHistory';
 
 const HomeView: React.FC<HomeViewProps> = ({ target, mantra }) => {
-  const [count, setCount]             = useState(0);
+  const [count, setCount] = useState(0);
   const [todayChants, setTodayChants] = useState(0);
-  const [todayMalas, setTodayMalas]   = useState(0);
-  const [totalMalas, setTotalMalas]   = useState(0);
+  const [todayMalas, setTodayMalas] = useState(0);
+  const [totalMalas, setTotalMalas] = useState(0);
   const [floatingTexts, setFloatingTexts] = useState<{ id: number; x: number; y: number }[]>([]);
   const [showCelebration, setShowCelebration] = useState(false);
 
-  const tapLock     = useRef(false);
-  const audioRef    = useRef<HTMLAudioElement | null>(null);
-  const today       = new Date().toISOString().split('T')[0];
+  const tapLock = useRef(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // ────────────────────────────────────────────────
-  // Create audio element once (on mount)
-  // ────────────────────────────────────────────────
+  const today = new Date().toISOString().split('T')[0];
+
+  // Audio setup (plays on full mala completion)
   useEffect(() => {
-    audioRef.current = new Audio('/krishna_flute.mp3'); // adjust path if needed
+    audioRef.current = new Audio('https://nirmalgaihre.com.np/images/krishna_flute.mp3');
     audioRef.current.preload = 'auto';
 
-    // Optional: clean up
     return () => {
       if (audioRef.current) {
         audioRef.current.pause();
@@ -51,9 +49,7 @@ const HomeView: React.FC<HomeViewProps> = ({ target, mantra }) => {
     };
   }, []);
 
-  // ────────────────────────────────────────────────
-  // Load saved data on mount / when target or date changes
-  // ────────────────────────────────────────────────
+  // Load saved data
   useEffect(() => {
     const storedCurrent = localStorage.getItem(STORAGE_KEY_CURRENT);
     let current: SessionData | null = null;
@@ -83,9 +79,6 @@ const HomeView: React.FC<HomeViewProps> = ({ target, mantra }) => {
     }
   }, [target, today]);
 
-  // ────────────────────────────────────────────────
-  // Save session + history
-  // ────────────────────────────────────────────────
   const saveData = (
     newCount: number,
     newTodayChants: number,
@@ -100,28 +93,18 @@ const HomeView: React.FC<HomeViewProps> = ({ target, mantra }) => {
     };
     localStorage.setItem(STORAGE_KEY_CURRENT, JSON.stringify(currentSession));
 
+    let history: HistoryEntry[] = [];
     const storedHistory = localStorage.getItem(STORAGE_KEY_HISTORY);
-    let history: HistoryEntry[] = storedHistory ? JSON.parse(storedHistory) : [];
+    if (storedHistory) history = JSON.parse(storedHistory);
 
     const dayIndex = history.findIndex((h) => h.date === today);
     if (dayIndex >= 0) {
-      history[dayIndex] = {
-        ...history[dayIndex],
-        chants: newTodayChants,
-        malas: newTodayMalas,
-      };
+      history[dayIndex] = { ...history[dayIndex], chants: newTodayChants, malas: newTodayMalas };
     } else {
-      history.push({
-        date: today,
-        chants: newTodayChants,
-        malas: newTodayMalas,
-        startTime: Date.now(),
-      });
+      history.push({ date: today, chants: newTodayChants, malas: newTodayMalas, startTime: Date.now() });
     }
 
-    // Keep last ~2 years
     history = history.slice(-730);
-
     localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(history));
 
     setCount(newCount);
@@ -130,9 +113,6 @@ const HomeView: React.FC<HomeViewProps> = ({ target, mantra }) => {
     setTotalMalas(newTotalMalas);
   };
 
-  // ────────────────────────────────────────────────
-  // Handle chant / tap
-  // ────────────────────────────────────────────────
   const handleTap = (e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault();
     if (tapLock.current) return;
@@ -145,19 +125,16 @@ const HomeView: React.FC<HomeViewProps> = ({ target, mantra }) => {
     const id = Date.now();
 
     setFloatingTexts((prev) => [...prev, { id, x, y }]);
-    setTimeout(() => {
-      setFloatingTexts((prev) => prev.filter((t) => t.id !== id));
-    }, 1800);
+    setTimeout(() => setFloatingTexts((prev) => prev.filter((t) => t.id !== id)), 1800);
 
     // Update counters
-    const newCount       = count + 1;
-    let   newTodayChants = todayChants + 1;
-    let   newTodayMalas  = todayMalas;
-    let   newTotalMalas  = totalMalas;
+    const newCount = count + 1;
+    let newTodayChants = todayChants + 1;
+    let newTodayMalas = todayMalas;
+    let newTotalMalas = totalMalas;
 
     let celebrationTriggered = false;
 
-    // ── MALA COMPLETE ──
     if (newCount % target === 0 && newCount > 0) {
       celebrationTriggered = true;
       newTodayMalas += 1;
@@ -166,26 +143,21 @@ const HomeView: React.FC<HomeViewProps> = ({ target, mantra }) => {
       setShowCelebration(true);
       setTimeout(() => setShowCelebration(false), 3000);
 
-      // Play krishna flute sound
+      // Play flute sound
       if (audioRef.current) {
-        audioRef.current.currentTime = 0;           // restart from beginning
+        audioRef.current.currentTime = 0;
         audioRef.current.play().catch((err) => {
-          console.warn('Audio play failed:', err);
+          console.warn('Audio playback prevented:', err);
         });
       }
     }
 
     saveData(newCount, newTodayChants, newTodayMalas, newTotalMalas);
 
-    // Unlock tap after small delay
-    setTimeout(() => {
-      tapLock.current = false;
-    }, 60);
+    setTimeout(() => { tapLock.current = false; }, 60);
   };
 
-  // ────────────────────────────────────────────────
   // Progress circle
-  // ────────────────────────────────────────────────
   const radius = 90;
   const circumference = 2 * Math.PI * radius;
   const progress = (count % target) / target;
@@ -195,15 +167,15 @@ const HomeView: React.FC<HomeViewProps> = ({ target, mantra }) => {
 
   return (
     <div
-      className="h-full flex flex-col items-center justify-center pt-8 px-6 select-none touch-none overflow-hidden relative"
+      className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col items-center justify-center pt-8 px-6 select-none touch-none overflow-hidden relative"
       onPointerDown={handleTap}
     >
       {/* Header */}
       <div className="text-center mb-8 h-20 flex flex-col justify-end pointer-events-none">
-        <h3 className="text-xs font-semibold uppercase mb-1 tracking-wide text-zinc-400">
+        <h3 className="text-xs font-semibold uppercase mb-1 tracking-wide text-white">
           आज भन्यो भोलि भन्यो जिन्दगि यो बित्यो नि हरि भजन कहिले नभुल !!
         </h3>
-        <h1 className="text-2xl font-bold Hindi-font px-4 leading-relaxed line-clamp-2 max-w-xs mx-auto text-white">
+        <h1 className="text-1xl font-bold Hindi-font px-4 leading-relaxed line-clamp-2 max-w-xs mx-auto">
           जपौ - {mantra.text}
         </h1>
       </div>
@@ -212,7 +184,7 @@ const HomeView: React.FC<HomeViewProps> = ({ target, mantra }) => {
       <div className="relative w-72 h-72 flex items-center justify-center mb-12 pointer-events-none">
         <svg className="w-full h-full" viewBox="0 0 200 200">
           <circle
-            className="text-zinc-700"
+            className="text-zinc-800"
             strokeWidth="8"
             stroke="currentColor"
             fill="transparent"
@@ -244,29 +216,29 @@ const HomeView: React.FC<HomeViewProps> = ({ target, mantra }) => {
           >
             {displayCount}
           </span>
-          <span className="text-zinc-400 text-sm mt-1 font-medium tracking-tighter">
+          <span className="text-zinc-500 text-sm mt-1 font-medium tracking-tighter">
             / {target}
           </span>
         </div>
 
         {showCelebration && (
-          <div className="absolute -top-10 bg-amber-900/40 text-amber-200 px-6 py-2 rounded-full text-sm font-bold shadow-lg animate-bounce pointer-events-none backdrop-blur-sm border border-amber-700/30">
+          <div className="absolute -top-10 bg-amber-900/50 text-amber-200 px-6 py-2 rounded-full text-sm font-bold shadow-lg animate-bounce pointer-events-none backdrop-blur-sm border border-amber-700/40">
             ✨ MALA COMPLETE ✨
           </div>
         )}
       </div>
 
-      {/* Today's stats */}
+      {/* Stats */}
       <div className="w-full max-w-xs text-center mt-4 space-y-4 pointer-events-none">
-        <p className="text-sm text-zinc-300 font-semibold uppercase tracking-wide">
+        <p className="text-sm text-zinc-400 font-semibold uppercase tracking-wide">
           Today Chants : {todayChants.toString().padStart(3, '0')}
         </p>
-        <p className="text-sm text-zinc-300 font-semibold uppercase tracking-wide">
+        <p className="text-sm text-zinc-400 font-semibold uppercase tracking-wide">
           Today Malas  : {todayMalas.toString().padStart(2, '0')}
         </p>
 
         <div className="flex items-center justify-center space-x-3 mt-6">
-          <span className="text-sm font-bold uppercase tracking-wider text-zinc-300">
+          <span className="text-sm font-bold uppercase tracking-wider text-zinc-400">
             Lifetime Malas
           </span>
           <span className={`${showCelebration ? 'animate-[shake_0.6s_infinite]' : ''} text-2xl`}>📿</span>
@@ -276,7 +248,7 @@ const HomeView: React.FC<HomeViewProps> = ({ target, mantra }) => {
         </p>
       </div>
 
-      <p className="text-zinc-500 text-xs uppercase font-medium tracking-wider mt-10 pointer-events-none">
+      <p className="text-zinc-600 text-xs uppercase font-medium tracking-wider mt-10 pointer-events-none">
         Tap anywhere to chant
       </p>
 

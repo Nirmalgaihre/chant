@@ -22,6 +22,7 @@ interface StatsScreenProps {
   totalMalas: number;
   history: HistoryEntry[];
   mantra: string;
+  // darkMode prop is kept for compatibility but ignored
   darkMode?: boolean;
 }
 
@@ -29,7 +30,6 @@ const StatsScreen: React.FC<StatsScreenProps> = ({
   totalMalas = 0,
   history = [],
   mantra,
-  darkMode = false,
 }) => {
   const [liveTodayChants, setLiveTodayChants] = useState(0);
 
@@ -54,8 +54,8 @@ const StatsScreen: React.FC<StatsScreenProps> = ({
       }
     };
 
-    updateToday(); // initial
-    const interval = setInterval(updateToday, 2200); // ~every 2.2 seconds
+    updateToday();
+    const interval = setInterval(updateToday, 2200);
 
     return () => clearInterval(interval);
   }, []);
@@ -135,7 +135,7 @@ const StatsScreen: React.FC<StatsScreenProps> = ({
   }, [history]);
 
   return (
-    <div className={`min-h-screen p-6 pt-10 ${darkMode ? 'bg-gray-950 text-gray-100' : 'bg-gray-50 text-gray-900'}`}>
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 p-6 pt-10">
       <div className="max-w-md mx-auto space-y-8">
 
         {/* Mantra Title */}
@@ -147,11 +147,11 @@ const StatsScreen: React.FC<StatsScreenProps> = ({
         </div>
 
         {/* Live Today */}
-        <div className="text-center bg-gradient-to-br from-orange-900/30 to-amber-900/20 rounded-2xl p-6 border border-orange-500/20">
+        <div className="text-center bg-gradient-to-br from-orange-950/40 to-amber-950/30 rounded-2xl p-6 border border-orange-800/40 shadow-lg">
           <p className="text-sm uppercase tracking-wider text-orange-400 mb-1">Live Today</p>
           <div className="text-5xl md:text-6xl font-black text-orange-500">
             {liveTodayChants.toLocaleString()}
-            <span className="text-2xl font-normal text-gray-400 ml-3">chants</span>
+            <span className="text-2xl font-normal text-zinc-400 ml-3">chants</span>
           </div>
         </div>
 
@@ -163,10 +163,8 @@ const StatsScreen: React.FC<StatsScreenProps> = ({
               onClick={() => setRange(r as any)}
               className={`flex-1 py-3 px-4 rounded-xl text-sm font-bold uppercase tracking-wider transition-all ${
                 range === r
-                  ? 'bg-orange-600 text-white shadow-lg'
-                  : darkMode
-                    ? 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  ? 'bg-orange-600 text-white shadow-lg shadow-orange-900/40'
+                  : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700 border border-zinc-700'
               }`}
             >
               {r === 'week' ? 'Week' : r === 'month' ? 'Month' : r === '6months' ? '90 Days' : 'Year'}
@@ -175,22 +173,28 @@ const StatsScreen: React.FC<StatsScreenProps> = ({
         </div>
 
         {/* Chart */}
-        <div className={`p-5 rounded-3xl border shadow-xl ${
-          darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'
-        }`}>
-          <h2 className="text-xs uppercase font-black tracking-widest mb-4 text-center opacity-80">
+        <div className="p-5 rounded-3xl border border-zinc-800 bg-zinc-900/70 shadow-xl backdrop-blur-sm">
+          <h2 className="text-xs uppercase font-black tracking-widest mb-4 text-center text-zinc-400">
             Progress Overview
           </h2>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData}>
-                <CartesianGrid vertical={false} strokeDasharray="4 4" stroke={darkMode ? '#334155' : '#e2e8f0'} />
-                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: darkMode ? '#94a3b8' : '#475569' }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: darkMode ? '#94a3b8' : '#475569' }} />
-                <Tooltip cursor={{ fill: darkMode ? 'rgba(30,41,59,0.4)' : 'rgba(241,245,249,0.6)' }} />
+                <CartesianGrid vertical={false} strokeDasharray="4 4" stroke="#334155" />
+                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#94a3b8' }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} />
+                <Tooltip 
+                  cursor={{ fill: 'rgba(30,41,59,0.4)' }}
+                  contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
+                  labelStyle={{ color: '#e2e8f0' }}
+                  itemStyle={{ color: '#f97316' }}
+                />
                 <Bar dataKey="value" radius={[8,8,0,0]} barSize={50} minPointSize={6}>
                   {chartData.map((_, i) => (
-                    <Cell key={i} fill={chartData[i].value > 0 ? '#f97316' : (darkMode ? '#1e293b' : '#e2e8f0')} />
+                    <Cell 
+                      key={i} 
+                      fill={chartData[i].value > 0 ? '#f97316' : '#1e293b'} 
+                    />
                   ))}
                 </Bar>
               </BarChart>
@@ -203,11 +207,9 @@ const StatsScreen: React.FC<StatsScreenProps> = ({
           {chartData.map((item, i) => (
             <div
               key={i}
-              className={`flex justify-between items-center p-5 rounded-2xl border ${
-                darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200 shadow-sm'
-              }`}
+              className="flex justify-between items-center p-5 rounded-2xl border border-zinc-800 bg-zinc-900/70"
             >
-              <span className="text-sm font-black uppercase tracking-wider opacity-80">{item.label}</span>
+              <span className="text-sm font-black uppercase tracking-wider text-zinc-400">{item.label}</span>
               <span className="text-2xl font-black text-orange-500">{item.value.toLocaleString()}</span>
             </div>
           ))}
@@ -216,10 +218,10 @@ const StatsScreen: React.FC<StatsScreenProps> = ({
         {/* Recent Days */}
         <div className="space-y-5">
           <div className="flex justify-between items-center px-1">
-            <h3 className={`text-xs font-black uppercase tracking-widest ${darkMode ? 'text-gray-500' : 'text-gray-600'}`}>
+            <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500">
               Recent Days
             </h3>
-            <button className="text-xs font-bold text-orange-500 flex items-center gap-1">
+            <button className="text-xs font-bold text-orange-500 flex items-center gap-1 hover:opacity-90 transition">
               View All <ChevronRight size={14} />
             </button>
           </div>
@@ -229,15 +231,13 @@ const StatsScreen: React.FC<StatsScreenProps> = ({
               {recentDays.map(day => (
                 <div
                   key={day.id}
-                  className={`p-4 rounded-2xl border flex justify-between items-center ${
-                    darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'
-                  }`}
+                  className="p-4 rounded-2xl border border-zinc-800 bg-zinc-900/70 flex justify-between items-center"
                 >
                   <div>
-                    <p className={`font-semibold ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
+                    <p className="font-semibold text-zinc-100">
                       {new Date(day.startTime).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
                     </p>
-                    <p className="text-xs text-gray-500 mt-0.5">
+                    <p className="text-xs text-zinc-500 mt-0.5">
                       {new Date(day.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
@@ -246,9 +246,7 @@ const StatsScreen: React.FC<StatsScreenProps> = ({
               ))}
             </div>
           ) : (
-            <div className={`text-center py-14 rounded-2xl border border-dashed ${
-              darkMode ? 'border-gray-800 text-gray-600' : 'border-gray-300 text-gray-400'
-            }`}>
+            <div className="text-center py-14 rounded-2xl border border-dashed border-zinc-800 text-zinc-500">
               <History className="mx-auto mb-3 opacity-60" size={32} />
               <p className="text-sm font-medium">No chanting recorded yet</p>
             </div>
