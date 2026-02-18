@@ -75,7 +75,7 @@ const AboutView: React.FC = () => {
         </a>
 
         <a
-          href="https://instagram.com/gaihre-nirmal"
+          href="https://instagram.com/gaihre_nirmal"
           target="_blank"
           rel="noopener noreferrer"
           className="group flex flex-col items-center transition-transform hover:-translate-y-1"
