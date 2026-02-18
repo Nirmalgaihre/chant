@@ -1,0 +1,8 @@
+
+{
+  "name": "Naam Jap Counter",
+  "description": "A minimal, spiritual, and clean Jap counter app featuring a circular dashboard, mantra animations, and comprehensive progress statistics.",
+  "requestFramePermissions": [
+    "vibrate"
+  ]
+}
