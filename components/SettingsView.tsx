@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+// src/components/SettingsView.tsx
+import React, { useState, useEffect } from 'react';
 import { UserSettings, Mantra } from '../types';
 
 interface SettingsViewProps {
@@ -6,7 +7,7 @@ interface SettingsViewProps {
   setSettings: React.Dispatch<React.SetStateAction<UserSettings>>;
   mantras: Mantra[];
   setMantras: React.Dispatch<React.SetStateAction<Mantra[]>>;
-  onResetSession: () => void;
+  onResetAllData: () => void;
 }
 
 const SettingsView: React.FC<SettingsViewProps> = ({
@@ -14,266 +15,183 @@ const SettingsView: React.FC<SettingsViewProps> = ({
   setSettings,
   mantras,
   setMantras,
-  onResetSession,
+  onResetAllData,
 }) => {
   const [newMantra, setNewMantra] = useState('');
+  const [showConfirmReset, setShowConfirmReset] = useState(false);
+  const [showResetComplete, setShowResetComplete] = useState(false);
+
+  useEffect(() => {
+    if (showResetComplete) {
+      const timer = setTimeout(() => {
+        setShowResetComplete(false);
+        window.location.replace(window.location.href);
+      }, 2800);
+      return () => clearTimeout(timer);
+    }
+  }, [showResetComplete]);
 
   const addMantra = () => {
     if (!newMantra.trim()) return;
-    const mantra: Mantra = {
+    const newItem: Mantra = {
       id: Date.now().toString(),
       text: newMantra.trim(),
       isCustom: true,
     };
-    setMantras((prev) => [...prev, mantra]);
+    setMantras(prev => [...prev, newItem]);
     setNewMantra('');
   };
 
   const deleteMantra = (id: string) => {
     if (settings.selectedMantraId === id) {
-      const remaining = mantras.filter((m) => m.id !== id);
-      setSettings((s) => ({
+      const remaining = mantras.filter(m => m.id !== id);
+      setSettings(s => ({
         ...s,
-        selectedMantraId: remaining[0]?.id || '1',
+        selectedMantraId: remaining[0]?.id || '',
       }));
     }
-    setMantras((prev) => prev.filter((m) => m.id !== id));
+    setMantras(prev => prev.filter(m => m.id !== id));
   };
 
-  const updateSetting = <K extends keyof UserSettings>(key: K, value: UserSettings[K]) => {
-    setSettings((prev) => ({ ...prev, [key]: value }));
+  const handleFullReset = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!showConfirmReset) {
+      setShowConfirmReset(true);
+      return;
+    }
+
+    // Clear data
+    localStorage.removeItem('mantraSession');
+    localStorage.removeItem('mantraHistory');
+
+    onResetAllData();
+
+    // Show completion message → then reload
+    setShowResetComplete(true);
+    setShowConfirmReset(false);
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 pb-24 pt-10 px-5 sm:px-6 md:px-8 text-zinc-100">
+    <div className="min-h-screen bg-zinc-950 pb-24 pt-10 px-6 text-zinc-100 relative">
       <div className="max-w-2xl mx-auto space-y-10">
 
-        {/* Header */}
-        <header className="space-y-1">
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">
-            Settings
-          </h1>
-          <p className="text-base text-zinc-400">
-            Customize your Jap experience
-          </p>
-        </header>
+        <h1 className="text-4xl font-bold">Settings</h1>
 
-        {/* Mantra Selection */}
-        <section className="space-y-5">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-orange-500">
+        <section className="space-y-6">
+          <h2 className="text-orange-500 uppercase text-sm font-semibold tracking-wider">
             Your Mantras
           </h2>
 
           <div className="space-y-3">
-            {mantras.map((mantra) => {
-              const isSelected = settings.selectedMantraId === mantra.id;
+            {mantras.map(m => {
+              const isSelected = settings.selectedMantraId === m.id;
               return (
-                <button
-                  key={mantra.id}
-                  type="button"
-                  onClick={() => updateSetting('selectedMantraId', mantra.id)}
-                  className={`
-                    group w-full flex items-center justify-between gap-4
-                    p-4 rounded-2xl transition-all duration-300
-                    border ${isSelected
-                      ? 'border-orange-600/70 bg-orange-950/40'
-                      : 'border-zinc-800 bg-zinc-900/70 hover:border-zinc-600'
-                    }
-                    active:scale-[0.98]
-                  `}
+                <div
+                  key={m.id}
+                  onClick={() => setSettings(s => ({ ...s, selectedMantraId: m.id }))}
+                  className={`p-4 rounded-2xl border flex justify-between items-center cursor-pointer transition-all ${
+                    isSelected ? 'border-orange-600 bg-orange-950/30' : 'border-zinc-800 hover:border-zinc-600'
+                  }`}
                 >
-                  <span
-                    className={`
-                      Hindi-font text-lg font-medium truncate flex-1 text-left
-                      ${isSelected ? 'text-orange-300' : 'text-zinc-200'}
-                    `}
-                  >
-                    {mantra.text}
+                  <span className={`Hindi-font text-lg ${isSelected ? 'text-orange-300' : 'text-zinc-200'}`}>
+                    {m.text}
                   </span>
-
-                  <div className="flex items-center gap-3 shrink-0">
-                    {mantra.isCustom && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteMantra(mantra.id);
-                        }}
-                        className="p-2 -mr-2 text-zinc-500 hover:text-red-400 transition-colors"
-                        aria-label="Delete mantra"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
-                      </button>
-                    )}
-
-                    {isSelected && (
-                      <svg
-                        className="w-6 h-6 text-orange-500"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    )}
-                  </div>
-                </button>
+                  {m.isCustom && (
+                    <button
+                      onClick={e => {
+                        e.stopPropagation();
+                        deleteMantra(m.id);
+                      }}
+                      className="text-red-400 hover:text-red-300 text-xl px-2"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
               );
             })}
           </div>
 
-          {/* Add new mantra */}
           <div className="flex gap-3 mt-6">
             <input
-              type="text"
               value={newMantra}
-              onChange={(e) => setNewMantra(e.target.value)}
-              placeholder="Enter new mantra..."
-              className={`
-                flex-1 px-5 py-4 rounded-2xl border text-base
-                bg-zinc-900 border-zinc-700 text-zinc-100
-                focus:border-orange-500 focus:ring-2 focus:ring-orange-900/40
-                outline-none transition-all placeholder-zinc-500
-              `}
+              onChange={e => setNewMantra(e.target.value)}
+              placeholder="Add new mantra..."
+              className="flex-1 px-5 py-4 rounded-2xl bg-zinc-900 border border-zinc-700 focus:border-orange-500 outline-none text-zinc-100"
             />
             <button
               onClick={addMantra}
               disabled={!newMantra.trim()}
-              className={`
-                px-6 py-4 rounded-2xl font-semibold text-white
-                bg-orange-600 hover:bg-orange-700 active:bg-orange-800
-                disabled:opacity-50 disabled:cursor-not-allowed
-                transition-all duration-200 shadow-sm hover:shadow
-              `}
+              className="px-6 py-4 bg-orange-600 rounded-2xl font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Add
             </button>
           </div>
         </section>
 
-        {/* Preferences */}
-        <section className="space-y-5">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-orange-500">
-            Preferences
-          </h2>
-
-          <div className="rounded-3xl overflow-hidden border border-zinc-800 bg-zinc-900/70">
-            <SettingRow
-              label="Target Count"
-              value={
-                <input
-                  type="number"
-                  value={settings.targetCount}
-                  onChange={(e) => updateSetting('targetCount', Number(e.target.value))}
-                  className="w-24 text-right text-lg font-semibold bg-transparent outline-none text-orange-400"
-                />
-              }
-            />
-
-            <SettingRow
-              label="Sound Effects"
-              value={
-                <Toggle
-                  enabled={settings.soundEnabled}
-                  onChange={() => updateSetting('soundEnabled', !settings.soundEnabled)}
-                />
-              }
-            />
-
-            <SettingRow
-              label="Vibration Feedback"
-              value={
-                <Toggle
-                  enabled={settings.vibrationEnabled}
-                  onChange={() => updateSetting('vibrationEnabled', !settings.vibrationEnabled)}
-                />
-              }
-            />
-
+        <section className="space-y-6 pt-12">
+          <div className="text-center text-zinc-400 text-sm mb-5">
+            This will permanently delete all progress (today + lifetime + history).
           </div>
+
+          {showResetComplete ? (
+            <div className="text-center py-20 animate-pulse">
+              <div className="text-4xl font-bold text-green-400 mb-6">
+                ✓ Reset Complete
+              </div>
+              <p className="text-zinc-300 text-xl">
+                All data has been cleared.<br />
+                Reloading app...
+              </p>
+            </div>
+          ) : showConfirmReset ? (
+            <div className="space-y-6 animate-fade-in">
+              <div className="text-center text-red-300 font-medium text-xl tracking-wide">
+                Are you sure? This cannot be undone.
+              </div>
+              <div className="flex gap-4">
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmReset(false)}
+                  className="flex-1 py-5 px-6 bg-zinc-800 rounded-2xl text-zinc-200 font-medium hover:bg-zinc-700 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleFullReset}
+                  className="flex-1 py-5 px-6 bg-red-700 rounded-2xl text-white font-bold hover:bg-red-600 transition shadow-lg"
+                >
+                  Yes, Delete Everything
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={handleFullReset}
+              className="w-full py-6 px-8 bg-gradient-to-r from-red-900 via-red-800 to-red-700 rounded-2xl text-xl font-bold text-white shadow-xl hover:brightness-110 active:brightness-90 transition-all transform active:scale-[0.98]"
+            >
+              Reset All Data
+            </button>
+          )}
         </section>
 
-        {/* Reset Session */}
-        <section>
-          <button
-            onClick={() => {
-              if (confirm('Reset current session? This cannot be undone.')) {
-                onResetSession();
-              }
-            }}
-            className="
-              w-full py-4 px-6 rounded-2xl font-semibold text-base
-              bg-zinc-800 text-zinc-300
-              hover:bg-zinc-700 active:bg-zinc-600
-              transition-all duration-200 border border-zinc-700
-            "
-          >
-            Reset Current Session
-          </button>
-        </section>
       </div>
+
+      <style jsx global>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(12px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+          animation: fadeIn 0.5s ease-out forwards;
+        }
+      `}</style>
     </div>
   );
 };
-
-/* ── Reusable Setting Row ── */
-function SettingRow({
-  label,
-  value,
-  border = true,
-}: {
-  label: string;
-  value: React.ReactNode;
-  border?: boolean;
-}) {
-  return (
-    <div
-      className={`
-        flex items-center justify-between px-6 py-4
-        ${border ? 'border-b border-zinc-800' : ''}
-      `}
-    >
-      <span className="text-base font-medium text-zinc-200">
-        {label}
-      </span>
-      {value}
-    </div>
-  );
-}
-
-/* ── Custom Toggle Switch ── */
-function Toggle({ enabled, onChange }: { enabled: boolean; onChange: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onChange}
-      className={`
-        relative inline-flex h-7 w-14 items-center rounded-full
-        transition-colors duration-300 ease-in-out
-        ${enabled ? 'bg-orange-600' : 'bg-zinc-700'}
-      `}
-      role="switch"
-      aria-checked={enabled}
-    >
-      <span
-        className={`
-          inline-block h-6 w-6 transform rounded-full bg-white shadow
-          transition duration-300 ease-in-out
-          ${enabled ? 'translate-x-7' : 'translate-x-0.5'}
-        `}
-      />
-    </button>
-  );
-}
 
 export default SettingsView;

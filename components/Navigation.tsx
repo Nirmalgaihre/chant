@@ -1,6 +1,6 @@
 // Navigation.tsx
 import React from 'react';
-import { ViewType } from '../types'; // Adjust path if needed
+import { ViewType } from '../types'; // adjust path if needed
 
 interface NavigationProps {
   currentView: ViewType;
@@ -68,22 +68,21 @@ const Navigation: React.FC<NavigationProps> = ({ currentView, setView }) => {
       className="
         fixed inset-x-0 bottom-0 z-50
         pb-[env(safe-area-inset-bottom)]
+        pointer-events-none
       "
     >
-      {/* ────────────────────────────────────────────────
-          Variant 1: Rounded rectangle with frosted glass (most common professional look)
-      ──────────────────────────────────────────────── */}
       <div
         className="
-          mx-auto max-w-md px-4 sm:px-6
-          bg-white/75 dark:bg-neutral-900/75
-          backdrop-blur-2xl
-          border border-neutral-200/60 dark:border-neutral-800/50
-          shadow-xl shadow-black/8 dark:shadow-black/35
+          mx-auto max-w-md px-5 sm:px-6
+          bg-zinc-900/60 backdrop-blur-xl
+          border border-zinc-700/50
+          shadow-2xl shadow-black/25
           rounded-2xl
+          pointer-events-auto
+          mt-4 mb-3
         "
       >
-        <div className="flex items-center justify-around py-2.5">
+        <div className="flex items-center justify-around py-3">
           {tabs.map((tab) => {
             const isActive = currentView === tab.id;
 
@@ -92,101 +91,54 @@ const Navigation: React.FC<NavigationProps> = ({ currentView, setView }) => {
                 key={tab.id}
                 onClick={() => setView(tab.id)}
                 className={`
-                  group relative flex flex-col items-center
-                  min-w-[4.5rem] py-2 px-3 rounded-xl
+                  group flex flex-col items-center justify-center
+                  min-w-[4.25rem] py-2 px-3 rounded-xl
                   transition-all duration-300 ease-out
-                  touch-manipulation
+                  active:scale-95 touch-manipulation
                   ${isActive
-                    ? 'text-orange-600 scale-105'
-                    : 'text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200'
+                    ? 'text-orange-400'
+                    : 'text-zinc-400 hover:text-zinc-200 active:text-zinc-300'
                   }
                 `}
-                aria-current={isActive ? 'page' : undefined}
                 aria-label={tab.label}
+                aria-current={isActive ? 'page' : undefined}
               >
                 <div
                   className={`
-                    p-3 rounded-full transition-all duration-300
+                    p-2.5 rounded-full transition-all duration-300
                     ${isActive
-                      ? 'bg-orange-100 dark:bg-orange-950/50 scale-110 shadow-sm'
-                      : 'group-hover:bg-neutral-100/70 dark:group-hover:bg-neutral-800/40'
+                      ? 'bg-orange-950/40 shadow-inner shadow-orange-900/30'
+                      : 'group-hover:bg-zinc-800/50 group-active:bg-zinc-800/70'
                     }
                   `}
                 >
                   {React.cloneElement(tab.icon as React.ReactElement, {
-                    className: `w-6 h-6 stroke-[1.9] transition-transform duration-300 ${
-                      isActive ? 'scale-110' : 'scale-100 group-hover:scale-105'
-                    }`,
+                    className: `
+                      w-6 h-6 stroke-[2] transition-all duration-300
+                      ${isActive ? 'scale-110' : 'group-hover:scale-105 group-active:scale-95'}
+                    `,
                   })}
                 </div>
 
                 <span
                   className={`
-                    mt-1.5 text-[10px] font-semibold uppercase tracking-wider
+                    mt-1.5 text-[10px] font-medium uppercase tracking-wider
                     transition-all duration-300
-                    ${isActive ? 'opacity-100' : 'opacity-70 group-hover:opacity-100'}
+                    ${isActive ? 'text-orange-400' : 'text-zinc-500 group-hover:text-zinc-300'}
                   `}
                 >
                   {tab.label}
                 </span>
 
+                {/* Active indicator bar */}
                 {isActive && (
-                  <span className="absolute -bottom-0.5 left-1/2 h-1 w-5 -translate-x-1/2 rounded-full bg-orange-500/90" />
+                  <div className="absolute -bottom-1 left-1/2 h-1 w-5 -translate-x-1/2 rounded-full bg-gradient-to-r from-orange-500 to-amber-600" />
                 )}
               </button>
             );
           })}
         </div>
       </div>
-
-      {/* ────────────────────────────────────────────────
-          Variant 2: Floating pill / capsule style (very trendy 2025–2026 mobile UI)
-          Uncomment the block below and comment out the previous one if you prefer this look
-      ──────────────────────────────────────────────── */}
-
-      {/* 
-      <div
-        className="
-          mx-auto max-w-sm px-6
-          bg-white/80 dark:bg-neutral-900/80
-          backdrop-blur-2xl
-          border border-neutral-200/40 dark:border-neutral-700/40
-          shadow-2xl shadow-black/12 dark:shadow-black/40
-          rounded-full
-        "
-      >
-        <div className="flex items-center justify-center gap-6 sm:gap-10 py-3.5">
-          {tabs.map((tab) => {
-            const isActive = currentView === tab.id;
-
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setView(tab.id)}
-                className={`
-                  group relative p-3 rounded-full transition-all duration-300
-                  ${isActive
-                    ? 'bg-orange-100 dark:bg-orange-950/60 scale-110 shadow-md'
-                    : 'hover:bg-neutral-100/70 dark:hover:bg-neutral-800/40'
-                  }
-                `}
-                aria-label={tab.label}
-              >
-                {React.cloneElement(tab.icon as React.ReactElement, {
-                  className: `w-7 h-7 stroke-[1.8] transition-transform duration-300 ${
-                    isActive ? 'scale-110 text-orange-600' : 'text-neutral-500 group-hover:text-neutral-700 dark:text-neutral-400 dark:group-hover:text-neutral-200'
-                  }`,
-                })}
-
-                {isActive && (
-                  <span className="absolute -bottom-1 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-orange-600" />
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-      */}
     </nav>
   );
 };

@@ -1,3 +1,4 @@
+// src/components/HomeView.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { Mantra } from '../types'; // adjust path if needed
 
@@ -33,14 +34,12 @@ const HomeView: React.FC<HomeViewProps> = ({ target, mantra }) => {
 
   const tapLock = useRef(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-
   const today = new Date().toISOString().split('T')[0];
 
-  // Audio setup (plays on full mala completion)
+  // Audio setup
   useEffect(() => {
     audioRef.current = new Audio('https://nirmalgaihre.com.np/images/krishna_flute.mp3');
     audioRef.current.preload = 'auto';
-
     return () => {
       if (audioRef.current) {
         audioRef.current.pause();
@@ -65,16 +64,15 @@ const HomeView: React.FC<HomeViewProps> = ({ target, mantra }) => {
     const history: HistoryEntry[] = storedHistory ? JSON.parse(storedHistory) : [];
 
     if (current && current.date === today) {
-      setTodayChants(current.todayChants);
-      setTodayMalas(current.todayMalas);
-      setTotalMalas(current.totalMalas);
+      setTodayChants(current.todayChants || 0);
+      setTodayMalas(current.todayMalas || 0);
+      setTotalMalas(current.totalMalas || 0);
       setCount(current.todayChants % target);
     } else {
       setTodayChants(0);
       setTodayMalas(0);
       setCount(0);
-
-      const lifetime = history.reduce((sum, day) => sum + day.malas, 0);
+      const lifetime = history.reduce((sum, day) => sum + (day.malas || 0), 0);
       setTotalMalas(lifetime);
     }
   }, [target, today]);
@@ -95,16 +93,20 @@ const HomeView: React.FC<HomeViewProps> = ({ target, mantra }) => {
 
     let history: HistoryEntry[] = [];
     const storedHistory = localStorage.getItem(STORAGE_KEY_HISTORY);
-    if (storedHistory) history = JSON.parse(storedHistory);
+    if (storedHistory) {
+      try {
+        history = JSON.parse(storedHistory);
+      } catch {}
+    }
 
     const dayIndex = history.findIndex((h) => h.date === today);
     if (dayIndex >= 0) {
       history[dayIndex] = { ...history[dayIndex], chants: newTodayChants, malas: newTodayMalas };
-    } else {
+    } else if (newTodayChants > 0 || newTodayMalas > 0) {
       history.push({ date: today, chants: newTodayChants, malas: newTodayMalas, startTime: Date.now() });
     }
 
-    history = history.slice(-730);
+    history = history.slice(-730); // keep last ~2 years
     localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(history));
 
     setCount(newCount);
@@ -116,14 +118,12 @@ const HomeView: React.FC<HomeViewProps> = ({ target, mantra }) => {
   const handleTap = (e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault();
     if (tapLock.current) return;
-
     tapLock.current = true;
 
     // Floating text
     const x = e.clientX ?? window.innerWidth / 2;
     const y = e.clientY ?? window.innerHeight / 2;
     const id = Date.now();
-
     setFloatingTexts((prev) => [...prev, { id, x, y }]);
     setTimeout(() => setFloatingTexts((prev) => prev.filter((t) => t.id !== id)), 1800);
 
@@ -132,18 +132,15 @@ const HomeView: React.FC<HomeViewProps> = ({ target, mantra }) => {
     let newTodayChants = todayChants + 1;
     let newTodayMalas = todayMalas;
     let newTotalMalas = totalMalas;
-
     let celebrationTriggered = false;
 
     if (newCount % target === 0 && newCount > 0) {
       celebrationTriggered = true;
       newTodayMalas += 1;
       newTotalMalas += 1;
-
       setShowCelebration(true);
       setTimeout(() => setShowCelebration(false), 3000);
 
-      // Play flute sound
       if (audioRef.current) {
         audioRef.current.currentTime = 0;
         audioRef.current.play().catch((err) => {
@@ -157,7 +154,7 @@ const HomeView: React.FC<HomeViewProps> = ({ target, mantra }) => {
     setTimeout(() => { tapLock.current = false; }, 60);
   };
 
-  // Progress circle
+  // Progress circle calculation
   const radius = 90;
   const circumference = 2 * Math.PI * radius;
   const progress = (count % target) / target;
@@ -172,31 +169,33 @@ const HomeView: React.FC<HomeViewProps> = ({ target, mantra }) => {
     >
       {/* Header */}
       <div className="text-center mb-8 h-20 flex flex-col justify-end pointer-events-none">
-        <h3 className="text-xs font-semibold uppercase mb-1 tracking-wide text-white">
+        <h3 className="text-xs font-semibold uppercase mb-1 tracking-wide text-white/90">
           आज भन्यो भोलि भन्यो जिन्दगि यो बित्यो नि हरि भजन कहिले नभुल !!
         </h3>
-        <h1 className="text-1xl font-bold Hindi-font px-4 leading-relaxed line-clamp-2 max-w-xs mx-auto">
+        <h1 className="text-xl md:text-2xl font-bold Hindi-font px-4 leading-relaxed line-clamp-2 max-w-xs mx-auto">
           जपौ - {mantra.text}
         </h1>
       </div>
 
-      {/* Progress Circle */}
-      <div className="relative w-72 h-72 flex items-center justify-center mb-12 pointer-events-none">
+      {/* Progress Circle with count inside */}
+      <div className="relative w-72 h-72 md:w-80 md:h-80 flex items-center justify-center mb-12 pointer-events-none">
         <svg className="w-full h-full" viewBox="0 0 200 200">
+          {/* Background ring */}
           <circle
             className="text-zinc-800"
-            strokeWidth="8"
+            strokeWidth="10"
             stroke="currentColor"
             fill="transparent"
             r={radius}
             cx="100"
             cy="100"
           />
+          {/* Progress ring */}
           <circle
-            className={`circular-progress transition-all duration-300 ${
+            className={`circular-progress transition-all duration-400 ease-out ${
               showCelebration ? 'text-amber-500 glow-active stroke-[12px]' : 'text-orange-500'
             }`}
-            strokeWidth="8"
+            strokeWidth="10"
             strokeDasharray={circumference}
             strokeDashoffset={offset}
             strokeLinecap="round"
@@ -208,28 +207,30 @@ const HomeView: React.FC<HomeViewProps> = ({ target, mantra }) => {
           />
         </svg>
 
+        {/* Centered count */}
         <div className="absolute flex flex-col items-center pointer-events-none">
           <span
-            className={`text-5xl font-bold transition-all duration-500 ${
-              showCelebration ? 'scale-125 text-amber-300' : 'text-white'
+            className={`text-6xl md:text-7xl font-black transition-all duration-500 ${
+              showCelebration ? 'scale-125 text-amber-300 glow-active' : 'text-white'
             }`}
           >
             {displayCount}
           </span>
-          <span className="text-zinc-500 text-sm mt-1 font-medium tracking-tighter">
+          <span className="text-zinc-500 text-sm mt-1 font-medium">
             / {target}
           </span>
         </div>
 
+        {/* Celebration banner */}
         {showCelebration && (
-          <div className="absolute -top-10 bg-amber-900/50 text-amber-200 px-6 py-2 rounded-full text-sm font-bold shadow-lg animate-bounce pointer-events-none backdrop-blur-sm border border-amber-700/40">
+          <div className="absolute -top-14 bg-amber-900/60 text-amber-100 px-6 py-2.5 rounded-full text-sm font-bold shadow-xl animate-bounce backdrop-blur-md border border-amber-700/50">
             ✨ MALA COMPLETE ✨
           </div>
         )}
       </div>
 
       {/* Stats */}
-      <div className="w-full max-w-xs text-center mt-4 space-y-4 pointer-events-none">
+      <div className="w-full max-w-xs text-center space-y-5 pointer-events-none">
         <p className="text-sm text-zinc-400 font-semibold uppercase tracking-wide">
           Today Chants : {todayChants.toString().padStart(3, '0')}
         </p>
@@ -237,22 +238,24 @@ const HomeView: React.FC<HomeViewProps> = ({ target, mantra }) => {
           Today Malas  : {todayMalas.toString().padStart(2, '0')}
         </p>
 
-        <div className="flex items-center justify-center space-x-3 mt-6">
+        <div className="flex items-center justify-center gap-3 mt-6">
           <span className="text-sm font-bold uppercase tracking-wider text-zinc-400">
             Lifetime Malas
           </span>
-          <span className={`${showCelebration ? 'animate-[shake_0.6s_infinite]' : ''} text-2xl`}>📿</span>
+          <span className={`${showCelebration ? 'animate-[shake_0.6s_infinite]' : ''} text-3xl`}>
+            📿
+          </span>
         </div>
-        <p className="text-6xl font-black text-orange-500 tracking-tight">
-          {totalMalas}
+        <p className="text-6xl md:text-7xl font-black text-orange-500 tracking-tighter">
+          {totalMalas.toLocaleString()}
         </p>
       </div>
 
-      <p className="text-zinc-600 text-xs uppercase font-medium tracking-wider mt-10 pointer-events-none">
+      <p className="mt-12 text-zinc-600 text-xs uppercase font-medium tracking-wider pointer-events-none">
         Tap anywhere to chant
       </p>
 
-      {/* Floating texts */}
+      {/* Floating mantra texts */}
       {floatingTexts.map((ft) => (
         <div
           key={ft.id}
@@ -268,7 +271,7 @@ const HomeView: React.FC<HomeViewProps> = ({ target, mantra }) => {
       ))}
 
       {/* Animations */}
-      <style>{`
+      <style jsx global>{`
         @keyframes shake {
           0%, 100% { transform: rotate(0deg); }
           25% { transform: rotate(8deg); }
@@ -284,6 +287,9 @@ const HomeView: React.FC<HomeViewProps> = ({ target, mantra }) => {
         }
         .glow-active {
           filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.7));
+        }
+        .circular-progress {
+          transition: stroke 0.4s ease-out, stroke-width 0.4s ease-out, filter 0.6s ease-out;
         }
       `}</style>
     </div>
