@@ -1,0 +1,6 @@
+{
+  "name": "Naam Jap Counter",
+  "version": "1.5.0",
+  "description": "A spiritual mantra chanting tracker with voice counting, goal setting, and detailed statistics.",
+  "requestFramePermissions": ["microphone"]
+}

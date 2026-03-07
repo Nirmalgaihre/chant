@@ -1,0 +1,47 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Playfair Display", serif;
+}
+
+@layer base {
+  body {
+    @apply bg-slate-950 text-zinc-100 antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@layer utilities {
+  .Hindi-font {
+    font-family: 'Inter', sans-serif; /* Fallback or specific Hindi font if needed */
+  }
+
+  @keyframes floatUp {
+    0%   { opacity: 0.9;  transform: translate(-50%, -30%) scale(0.95); }
+    40%  { opacity: 1;    transform: translate(-50%, -160%) scale(1.08); }
+    100% { opacity: 0;    transform: translate(-50%, -400%) scale(1.15); }
+  }
+
+  .mantra-float {
+    animation: floatUp 5.2s ease-out forwards;
+  }
+
+  @keyframes celebrationAppear {
+    0%   { opacity: 0; transform: translate(-50%, 30px); }
+    15%  { opacity: 1; transform: translate(-50%, -10px); filter: drop-shadow(0 0 20px rgba(245,158,11,0.7)); }
+    45%  { opacity: 1; transform: translate(-50%, -40px); filter: drop-shadow(0 0 12px rgba(245,158,11,0.4)); }
+    85%  { opacity: 0.7; transform: translate(-50%, -100px); }
+    100% { opacity: 0; transform: translate(-50%, -140px); }
+  }
+
+  @keyframes pulse-slow {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.06); }
+  }
+
+  .animate-pulse-slow {
+    animation: pulse-slow 3.2s ease-in-out infinite;
+  }
+}
