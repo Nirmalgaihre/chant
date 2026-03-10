@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence, useSpring, useTransform } from 'framer-motion';
+import { motion, AnimatePresence, useSpring, useTransform } from 'motion/react';
 import { Mantra, SessionData, HistoryEntry, UserSettings } from '../types';
 
-const SmoothNumber = ({ value, className }: { value: number; className?: string }) => {
+const SmoothNumber = ({ value, className }: { value: number, className?: string }) => {
   const springValue = useSpring(value, { stiffness: 120, damping: 20 });
   const displayValue = useTransform(springValue, (latest) => Math.floor(latest).toLocaleString());
 
@@ -29,15 +29,13 @@ const HomeView: React.FC<HomeViewProps> = ({ settings, mantra, onCountUpdate }) 
   const [todayMalas, setTodayMalas] = useState(0);
   const [totalChants, setTotalChants] = useState(0);
   const [showCelebration, setShowCelebration] = useState(false);
-  const [clickEffects, setClickEffects] = useState<
-    { id: number; x: number; y: number; text: string }[]
-  >([]);
+  const [clickEffects, setClickEffects] = useState<{ id: number; x: number; y: number; text: string }[]>([]);
 
   const tapLock = useRef(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const today = new Date().toISOString().split('T')[0];
 
   useEffect(() => {
-    // Load current session
     const storedCurrent = localStorage.getItem(STORAGE_KEY_CURRENT);
     let current: SessionData | null = null;
     if (storedCurrent) {
@@ -46,11 +44,9 @@ const HomeView: React.FC<HomeViewProps> = ({ settings, mantra, onCountUpdate }) 
       } catch {}
     }
 
-    // Load history
     const storedHistory = localStorage.getItem(STORAGE_KEY_HISTORY);
     const history: HistoryEntry[] = storedHistory ? JSON.parse(storedHistory) : [];
 
-    // Calculate lifetime total
     const lifetimeChants = history.reduce((sum, day) => sum + (day.chants || 0), 0);
     setTotalChants(lifetimeChants);
 
@@ -66,7 +62,6 @@ const HomeView: React.FC<HomeViewProps> = ({ settings, mantra, onCountUpdate }) 
   }, [target, today]);
 
   const saveData = (newCount: number, newTodayChants: number, newTotalChants: number) => {
-    // Save current session
     const currentSession: SessionData = {
       date: today,
       todayChants: newTodayChants,
@@ -74,7 +69,6 @@ const HomeView: React.FC<HomeViewProps> = ({ settings, mantra, onCountUpdate }) 
     };
     localStorage.setItem(STORAGE_KEY_CURRENT, JSON.stringify(currentSession));
 
-    // Update history
     let history: HistoryEntry[] = [];
     const storedHistory = localStorage.getItem(STORAGE_KEY_HISTORY);
     if (storedHistory) {
@@ -90,11 +84,10 @@ const HomeView: React.FC<HomeViewProps> = ({ settings, mantra, onCountUpdate }) 
       history.push({ date: today, chants: newTodayChants, startTime: Date.now() });
     }
 
-    // Keep only last ~2 years
     history = history.slice(-730);
     localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(history));
 
-    // Fake total chanting time update (every 10 counts)
+    // Update total chanting time every 10 counts
     if (newTodayChants % 10 === 0) {
       const storedTotalTime = localStorage.getItem('total_chant_time');
       const totalTime = storedTotalTime ? parseInt(storedTotalTime) : 0;
@@ -112,55 +105,48 @@ const HomeView: React.FC<HomeViewProps> = ({ settings, mantra, onCountUpdate }) 
     if (tapLock.current) return;
     tapLock.current = true;
 
-    const nextCount = count + 1 > target ? 1 : count + 1;
+    const nextCount = (count + 1) > target ? 1 : count + 1;
     const newTodayChants = todayChants + 1;
     const newTotalChants = totalChants + 1;
 
+    // Sound and Haptic
     const isMalaComplete = newTodayChants % target === 0;
-
-    // Sound on mala completion
+    
     if (isMalaComplete && settings.completionSoundEnabled) {
+      // Use the default flute sound for mala completion
       const soundUrl = 'https://nirmalgaihre.com.np/images/krishna_flute.mp3';
       const audio = new Audio(soundUrl);
       audio.volume = 0.6;
       audio.play().catch(() => {});
     }
 
-    // Vibration
     if (settings.vibrationEnabled && navigator.vibrate) {
-      if (isMalaComplete) {
-        navigator.vibrate([100, 50, 100, 50, 100]);
-      } else {
-        navigator.vibrate(15);
+      navigator.vibrate(15);
+    }
+
+    if (newTodayChants % target === 0) {
+      setShowCelebration(true);
+      setTimeout(() => setShowCelebration(false), 3800);
+      if (settings.vibrationEnabled && navigator.vibrate) {
+        navigator.vibrate([100, 50, 100, 50, 100]); // Triple pulse for completion
       }
     }
 
-    // Celebration banner
-    if (isMalaComplete) {
-      setShowCelebration(true);
-      setTimeout(() => setShowCelebration(false), 3800);
-    }
-
-    // Floating mantra text effect
+    // Add floating mantra at click position
     const clickId = Date.now() + Math.random();
-    setClickEffects((prev) => [...prev, { id: clickId, x: e.clientX, y: e.clientY, text: mantra.text }]);
+    setClickEffects(prev => [...prev, { id: clickId, x: e.clientX, y: e.clientY, text: mantra.text }]);
     setTimeout(() => {
-      setClickEffects((prev) => prev.filter((eff) => eff.id !== clickId));
+      setClickEffects(prev => prev.filter(eff => eff.id !== clickId));
     }, 1500);
 
     saveData(nextCount, newTodayChants, newTotalChants);
-
-    setTimeout(() => {
-      tapLock.current = false;
-    }, 80);
+    setTimeout(() => { tapLock.current = false; }, 80);
   };
 
   const radius = 92;
   const circumference = 2 * Math.PI * radius;
   const progress = count / target;
   const offset = circumference - progress * circumference;
-
-  // When mala just completed → show target instead of 0
   const displayCount = count === 0 && todayChants > 0 && todayChants % target === 0 ? target : count;
 
   return (
@@ -175,12 +161,12 @@ const HomeView: React.FC<HomeViewProps> = ({ settings, mantra, onCountUpdate }) 
           <motion.div
             key={eff.id}
             initial={{ opacity: 1, x: eff.x, y: eff.y, scale: 0.8 }}
-            animate={{
+            animate={{ 
               opacity: 0,
               y: eff.y - 150,
               scale: 1.2,
             }}
-            transition={{ duration: 1.5, ease: 'easeOut' }}
+            transition={{ duration: 1.5, ease: "easeOut" }}
             className="fixed pointer-events-none z-[60] text-amber-200/90 font-medium text-xl select-none Hindi-font whitespace-nowrap"
             style={{ left: 0, top: 0, transform: 'translate(-50%, -50%)' }}
           >
@@ -220,6 +206,7 @@ const HomeView: React.FC<HomeViewProps> = ({ settings, mantra, onCountUpdate }) 
             strokeDasharray={circumference}
             strokeDashoffset={offset}
             strokeLinecap="round"
+            className=""
           />
           <defs>
             <linearGradient id="progressGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -236,7 +223,7 @@ const HomeView: React.FC<HomeViewProps> = ({ settings, mantra, onCountUpdate }) 
               initial={{ scale: 0.8, opacity: 0.5 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 1.2, opacity: 0, position: 'absolute' }}
-              transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+              transition={{ type: "spring", stiffness: 500, damping: 25 }}
               className={`text-7xl md:text-8xl font-black tracking-tighter tabular-nums ${
                 showCelebration
                   ? 'text-amber-200 drop-shadow-[0_0_28px_rgba(245,158,11,0.65)]'
@@ -246,7 +233,6 @@ const HomeView: React.FC<HomeViewProps> = ({ settings, mantra, onCountUpdate }) 
               <SmoothNumber value={displayCount} />
             </motion.div>
           </AnimatePresence>
-
           <span className="text-sm text-zinc-500 font-medium mt-1 tracking-widest uppercase">
             / {target}
           </span>
@@ -254,7 +240,13 @@ const HomeView: React.FC<HomeViewProps> = ({ settings, mantra, onCountUpdate }) 
 
         {showCelebration && (
           <div
-            className="absolute -top-20 left-1/2 -translate-x-1/2 text-xl md:text-2xl font-medium text-amber-200/95 tracking-wide drop-shadow-[0_4px_20px_rgba(245,158,11,0.6)] animate-[celebrationAppear_3.8s_ease-out_forwards] pointer-events-none z-20 whitespace-nowrap Hindi-font"
+            className="
+              absolute -top-20 left-1/2 -translate-x-1/2
+              text-xl md:text-2xl font-medium text-amber-200/95
+              tracking-wide drop-shadow-[0_4px_20px_rgba(245,158,11,0.6)]
+              animate-[celebrationAppear_3.8s_ease-out_forwards]
+              pointer-events-none z-20 whitespace-nowrap Hindi-font
+            "
           >
             {todayMalas} माला पूरा भयो
           </div>
